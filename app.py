@@ -2,10 +2,24 @@ from flask import Flask, escape, request, jsonify
 import json
 
 app = Flask(__name__)
-
+stud_id = 00000
+class_id = 000000
 DB = {
-    "students": [],
-    "classes": []
+    "students":
+        [
+            {
+                "first_name": "",
+                "last_name": "",
+                "id": 0
+            }
+        ],
+    "classes":
+        [
+            {
+                "class_name": "",
+                "class_id": 0
+            }
+        ]
 }
 
 
@@ -17,53 +31,45 @@ def hello():
 
 @app.route('/students', methods=['POST'])
 def create_student():
-    global id, data
-    DB['students'].append({'id' : id, 'first_name': request.form['name']})
-    student = [stud for stud in DB['students'] if stud["first_name"] == (request.form['name'])]
-    id = id+1
-    return jsonify({"student":student})
+    DB['students'].append({'id': request.form['stud_id'], 'first_name': request.form['first_name'],
+                           'last_name': request.form['last_name']})
+    print(DB)
+    return "Student created."
 
 
 @app.route('/students/<id>', methods=['GET'])
 def get_student(id):
-    student = [stud for stud in DB['students'] if stud["id"] == int(request.view_args['id'])]
-    return jsonify({"student": student})
+    for stud in DB['students']:
+        if stud["id"] == request.view_args['id']:
+            return jsonify({"student": stud})
+
 
 
 @app.route('/classes', methods=['POST'])
 def create_class():
-    global class_id, data
-    DB['classes'].append({'class_id': class_id, 'class_name': request.form['name']})
-    student = [stud for stud in data['classes'] if stud["class_name"] == (request.form['name'])]
-    class_id = class_id + 1
-    return jsonify({"Class": student})
+    global DB
+    DB['classes'].append({'class_id': request.form['class_id'], 'class_name': request.form['class_name']})
+    print(DB)
+    return "Class created."
 
 
-@app.route('/classes', methods=['GET'])
-def get_class():
-    cl = [cl for cl in DB['classes'] if cl["class_id"] == int(request.view_args['id'])]
-    return jsonify({"Class": cl})
+@app.route('/classes/<class_id>', methods=['GET'])
+def get_class(class_id):
+    for cl in DB['classes']:
+        if cl["class_id"] == request.view_args['class_id']:
+            return jsonify({"Class": cl})
 
 
-@app.route('/classes/<id>', methods=['PATCH'])
-def update_class(id):
-    stud = [stud for stud in DB['students'] if stud["id"] == int(request.form['student_id'])]
+@app.route('/classes/<class_id>', methods=['PATCH'])
+def update_class(class_id):
+    stud = [stud for stud in DB['students'] if stud["id"] == request.form['stud_id']]
     index = 0
-    for x in DB['classes']:
+    for i in DB['classes']:
         index = index + 1
-        if x["class_id"] == int(request.view_args['id']):
-            cl = x
+        if i["class_id"] == request.view_args['class_id']:
             break
-
-    if 'students' in cl:
-        flag = False
-        for y in cl['students']:
-            if y['id'] == int(request.form['student_id']):
-                flag = True
-                return "Student already registered in this class"
-        if not flag:
-            DB['classes'][index - 1]['students'].extend(stud)
+    if 'students' in DB['classes'][index - 1]:
+        DB['classes'][index - 1]['students'].append(stud)
     else:
-        DB['classes'][index - 1].update({'students': stud})
-
-    return jsonify({"Class": cl})
+        DB['classes'][index - 1].update({'students':stud})
+    return jsonify({"Class": DB['classes'][index - 1]})
